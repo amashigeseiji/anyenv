@@ -129,13 +129,19 @@ for env in $(anyenv-envs); do
     echo "set -x ${ENV_ROOT_VALUE} \"${ENV_ROOT}\""
     export ${ENV_ROOT_VALUE}="${ENV_ROOT}"
     echo "set -x PATH \$PATH \"${ENV_ROOT}/bin\""
+    echo "$(${ENV_ROOT}/bin/${env} init - ${no_rehash_arg}${shell})"
     ;;
   * )
-    echo "export ${ENV_ROOT_VALUE}=\"${ENV_ROOT}\""
-    export ${ENV_ROOT_VALUE}="${ENV_ROOT}"
-    echo "export PATH=\"${ENV_ROOT}/bin:\$PATH\""
+    cat <<EOS
+${env}() {
+  unset -f ${env}
+  export ${ENV_ROOT_VALUE}="${ENV_ROOT}"
+  export PATH=${ENV_ROOT}/bin:\${PATH}
+  eval "\$(${env} init - ${no_rehash_arg}${shell})"
+  ${env} \$@
+}
+EOS
     ;;
   esac
 
-  echo "$(${ENV_ROOT}/bin/${env} init - ${no_rehash_arg}${shell})"
 done
